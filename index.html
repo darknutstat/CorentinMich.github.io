@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+<title>StartGG Seeding</title>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.0/axios.min.js"></script>
+<script>
+const startggURL = "https://api.start.gg/gql/alpha";
+const startggKey = "1f3784ba801d6f9335ef9437c90a7bfa";
+async function getEventId(tournamentName, eventName) {
+  const eventSlug = `tournament/${tournamentName}/event/${eventName}`;
+  const eventId = await fetch(startggURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Authorization": `Bearer ${startggKey}`,
+    },
+    body: JSON.stringify({
+      query: `
+        query EventQuery($slug: String!) {
+          event(slug: $slug) {
+            id
+            name
+          }
+        }
+      `,
+      variables: {
+        slug: eventSlug,
+      },
+    }),
+  }).then(response => response.json()).then(data => data.data.event.id);
+
+  return eventId;
+}
+
+async function getSeeding(eventId, page = 1, top = 32) {
+  const topxSeeding = [];
+  let totalPages = 0;
+
+  do {
+    const response = await fetch(startggURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": `Bearer ${startggKey}`,
+      },
+      body: JSON.stringify({
+        query: `
+          query EventEntrants($eventId: ID!, $page: Int!) {
+            event(id: $eventId) {
+              id
+              name
+              entrants(query: {
+                page: $page
+                perPage: 100
+              }) {
+                pageInfo {
+                  total
+                  totalPages
+                }
+                nodes {
+                  id
+                  initialSeedNum
+                  participants {
+                    id
+                    gamerTag
+                    prefix
+                    user{
+                        location{
+                            city
+                            state
+                            country
+                        }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          eventId: eventId,
+          page: page,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    totalPages = data.data.event.entrants.pageInfo.totalPages;
+    for (const node of data.data.event.entrants.nodes) {
+      if (node.initialSeedNum <= top) {
+        topxSeeding.push({
+          seed: node.initialSeedNum,
+          tag: node.participants[0].gamerTag,
+          id: node.id,
+          prefix: node.participants[0].prefix,
+          country : node.participants[0].user.location.country,
+        });
+      }
+    }
+  } while (page++ < totalPages && topxSeeding.length < top);
+  topxSeeding.sort((a, b) => a.seed - b.seed);
+  return topxSeeding;
+}
+
+async function main() {
+  const bracket = prompt("Enter the event bracket URL");
+  const tournamentName = bracket.split("/")[4];
+  const eventName = bracket.split("/")[6];    
+  var eventId;
+  try{
+  eventId = await getEventId(tournamentName, eventName);
+  }catch{
+    document.write("Invalid bracket URL");
+    return;
+  }
+  const topxSeeding = await getSeeding(eventId);
+  /*Set the style of the table*/
+  document.write("<style>.column{border-right: 1px solid black;}</style>");
+  document.write("<style>th{padding: 5px; border: 1px solid black; border-collapse: collapse;}</style>");
+  document.write("<style>.rightLeft{border-right: 1px solid black; border-left: 1px solid black;}</style>");
+
+  /*Align the text to the center*/
+  document.write("<style>td, th{text-align: center;}</style>");
+  document.write("<table style = 'border: 1px solid black; border-collapse: collapse; padding: 5px;'>");
+  i = 0;
+  const flags = [
+    "Japan","https://upload.wikimedia.org/wikipedia/en/thumb/9/9e/Flag_of_Japan.svg/900px-Flag_of_Japan.svg.png",
+  "United States","https://upload.wikimedia.org/wikipedia/en/thumb/a/a4/Flag_of_the_United_States.svg/1235px-Flag_of_the_United_States.svg.png",
+  "Australia","https://th.bing.com/th/id/R.cb23f728d09edd17460e8b14271bd062?rik=tNgZFYaHkrQA5w&pid=ImgRaw&r=0",
+  "Netherlands","https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Flag_of_the_Netherlands.svg/900px-Flag_of_the_Netherlands.svg.png",
+  "Mexico","https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Flag_of_Mexico.svg/840px-Flag_of_Mexico.svg.png",
+  "Canada","https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Flag_of_Canada_%28Pantone%29.svg/1000px-Flag_of_Canada_%28Pantone%29.svg.png",
+  "Spain","https://upload.wikimedia.org/wikipedia/en/thumb/9/9a/Flag_of_Spain.svg/1200px-Flag_of_Spain.svg.png",
+  "United Kingdom","https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Flag_of_the_United_Kingdom.svg/1200px-Flag_of_the_United_Kingdom.svg.png",
+  "Sweden","https://th.bing.com/th/id/OIP.VvsmeBsVHqD5F1LoANs1zAHaEo?pid=ImgDet&rs=1",
+  "France","https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/900px-Flag_of_France.svg.png",
+  "Austria","https://th.bing.com/th/id/R.e87d9b154a61fd502c366fbb2129e75f?rik=gAw%2fy0zvOHY8aQ&pid=ImgRaw&r=0",
+  "Germany","https://th.bing.com/th/id/R.464367a25e478ca566d474d9c6472978?rik=7DTIeE%2b3s6WsKw&riu=http%3a%2f%2fwallpapercave.com%2fwp%2fsoKObwj.png&ehk=ME2fTlRSKvq3pP2ziKPPtHbgfhP823irznutsqCh6Ag%3d&risl=&pid=ImgRaw&r=0",
+  "Belgium","https://th.bing.com/th/id/R.a2ea81a1babd642a5c5afbefd7661791?rik=boBZyhh46l7qpA&riu=http%3a%2f%2fwww.rbvex.it%2feuropagif%2fBelgio.gif&ehk=yc7fjv8hTbMomVXJKTr7IJ3gRyv2BNctBiMGF61bOSU%3d&risl=&pid=ImgRaw&r=0",
+  "Morocco","https://th.bing.com/th/id/R.c183f17408bd0fd18ccd272c1b701487?rik=mfhNNSGL2SbPzg&pid=ImgRaw&r=0",
+  "Dominican Republic","https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Flag_of_the_Dominican_Republic.svg/750px-Flag_of_the_Dominican_Republic.svg.png"
+  ]
+  var line = [1,2,3,4,6,8,12,16,24,32,48,64];
+  while(i < topxSeeding.length/2){
+    if(topxSeeding[i].country == null){
+        topxSeeding[i].country = prompt("Please enter the country of " + topxSeeding[i].tag + " (e.g. United States, Japan, etc.)");
+    }
+    topxSeeding[i].country = "<img src = '" + flags[flags.indexOf(topxSeeding[i].country)+1] + "' height = '26px' width = '40.5px'> ";
+    if(topxSeeding[i+topxSeeding.length/2].country == null){
+        topxSeeding[i+topxSeeding.length/2].country = prompt("Please enter the country of " + topxSeeding[i+topxSeeding.length/2].tag + " (e.g. United States, Japan, etc.)");
+    }
+    topxSeeding[i+topxSeeding.length/2].country = "<img src = '" + flags[flags.indexOf(topxSeeding[i+topxSeeding.length/2].country)+1] + "' height = '26px' width = '40.5px'> ";
+    if(topxSeeding[i].prefix == null){
+        topxSeeding[i].prefix = "";
+    }
+    if(topxSeeding[i+topxSeeding.length/2].prefix == null){
+        topxSeeding[i+topxSeeding.length/2].prefix = "";
+    }
+    document.write("<tr><td class = 'rightLeft'>" + topxSeeding[i].seed + "</td><td>" + topxSeeding[i].country + "</td><td  class = 'column'>" + topxSeeding[i].prefix + " " + topxSeeding[i].tag + "</td>");
+    document.write("<td class = 'column' >" + topxSeeding[i+topxSeeding.length/2].seed + "</td><td>" + topxSeeding[i+topxSeeding.length/2].country  + "</td><td  class = 'column'>"+ topxSeeding[i+topxSeeding.length/2].prefix + " " + topxSeeding[i+topxSeeding.length/2].tag + "</td></tr>");
+    i++;
+    }
+    document.write("</table>");
+}
+
+main();
+
+</script>
+</body>
+Waiting for seeding to load...
+</html>
