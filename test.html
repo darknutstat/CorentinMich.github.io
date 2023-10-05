@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+<title>StartGG Seeding</title>
+</head>
+<body>
+<script>
+    function dispFile(contents) {
+  document.getElementById('contents').innerHTML=contents
+}
+function clickElem(elem) {
+	var eventMouse = document.createEvent("MouseEvents")
+	eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+	elem.dispatchEvent(eventMouse)
+}
+function openFile() {
+  document.getElementById('inp').click();
+}
+function readFile(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('contents').innerHTML = e.target.result;
+  }
+  reader.readAsText(file)
+}
+    const names = ["pickel",
+"gamewatch",
+"cloud",
+"sonic",
+"jack",
+"eflame_first",
+"yoshi",
+"fox",
+"snake",
+"wario",
+"diddy",
+"sora",
+"pitBoth",
+"tantan",
+"rosetta",
+"pacman",
+"samusBoth",
+"robot",
+"demon",
+"falco",
+"kamui",
+"ryu",
+"szerosuit",
+"palutena",
+"mario",
+"koopa",
+"paisy",
+"wolf",
+"ptrainer",
+"pikachu",
+"luigi",
+"miigunner",
+"ness",
+"roy",
+"captain",
+"ken",
+"toonlink",
+"brave",
+"bayonetta",
+"shulk",
+"gaogaen",
+"rockman",
+"buddy",
+"inkling",
+"sheik",
+"gekkouga",
+"",
+"dolly",
+"lucario",
+"mariod",
+"ice_climber",
+"purin",
+"donkey",
+"edge",
+"lucina",
+"younglink",
+"metaknight",
+"belmont",
+"duckhunt",
+"dedede",
+"master",
+"murabito",
+"marth",
+"wiifit",
+"shizue",
+"littlemac",
+"link",
+"reflet",
+"ridley",
+"pikmin",
+"koopajr",
+"lucas",
+"kirby",
+"zelda",
+"mewtwo",
+"ike",
+"krool",
+"packun",
+"chrom",
+"pichu",
+"miifighter",
+"random",
+"miiswordsman",
+"ganon",
+]
+
+for (let i = 0; i < names.length; i++) {
+    file = names[i] + ".txt";
+    document.write("<a href='" + file + "'>" + file + "</a><br>");
+}
+
+
+</script>
+</body>
+</html>
